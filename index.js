@@ -22,6 +22,7 @@ async function run() {
 
         const database = client.db("dhakaVarsity");
         const latestNewsCollection = database.collection("latestNews");
+        const usersCollection = database.collection("users");
 
         //Latest News Sent from Database
         app.get('/news', async (req, res) => {
@@ -30,12 +31,47 @@ async function run() {
             res.send(result)
         })
 
-        //Post API Connection
+        //Post API Connection of Latest News
         app.post('/news', async (req, res) => {
             const docs = req.body;
             const result = await latestNewsCollection.insertOne(docs);
             console.log(result)
             res.json(result)
+        })
+
+        app.get('/user', async (req, res) => {
+            const query = usersCollection.find({})
+            const result = await query.toArray();
+            res.send(result)
+        })
+
+        app.post('/user', async (req, res) => {
+            const user = req.body;
+            const result = await usersCollection.insertOne(user);
+            console.log(result)
+            res.json(result)
+        })
+
+        app.get('/user/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email }
+            const user = await usersCollection.findOne(query);
+            let isAdmin = false;
+            if (user?.role === 'admin') {
+                isAdmin = true;
+            }
+            res.json({ admin: isAdmin })
+        })
+
+        app.put('/user/admin', async (req, res) => {
+            const newUser = req.body;
+            console.log('put', newUser)
+            const filter = { email: newUser.email }
+
+            const updateInfo = { $set: { role: 'admin' } }
+            console.log(updateInfo)
+            const result = await usersCollection.updateOne(filter, updateInfo);
+            res.json(result);
         })
 
     } finally {
